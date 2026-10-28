@@ -7,7 +7,9 @@ import {
   PhoneOff,
   MessageSquare,
   Users,
-  Info
+  Info,
+  Captions,
+  CaptionsOff
 } from 'lucide-react';
 
 export const ControlsBar = ({
@@ -16,6 +18,8 @@ export const ControlsBar = ({
   isAudioOn,
   toggleVideo,
   toggleAudio,
+  isCaptionsOn = false,
+  toggleCaptions,
   onLeaveMeeting,
   activeSidebar,
   setActiveSidebar,
@@ -24,6 +28,7 @@ export const ControlsBar = ({
 }) => {
   const [currentTime, setCurrentTime] = useState('');
 
+  // Clock
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
@@ -35,6 +40,28 @@ export const ControlsBar = ({
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Keyboard shortcut: 'c' to toggle captions
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Don't trigger if user is typing in an input or textarea
+      if (
+        e.target.tagName === 'INPUT' ||
+        e.target.tagName === 'TEXTAREA' ||
+        e.target.isContentEditable
+      ) {
+        return;
+      }
+
+      if (e.key === 'c' || e.key === 'C') {
+        e.preventDefault();
+        if (toggleCaptions) toggleCaptions();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [toggleCaptions]);
 
   const toggleSidebar = (name) => {
     if (activeSidebar === name) {
@@ -53,7 +80,7 @@ export const ControlsBar = ({
         <span className="font-mono tracking-wider text-gray-200">{roomId}</span>
       </div>
 
-      {/* Center: Main Media & Leave Controls */}
+      {/* Center: Main Media, Captions & Leave Controls */}
       <div className="flex items-center gap-3 sm:gap-4 mx-auto md:mx-0">
         {/* Microphone Toggle */}
         <button
@@ -81,6 +108,20 @@ export const ControlsBar = ({
           aria-label={isVideoOn ? 'Turn off camera' : 'Turn on camera'}
         >
           {isVideoOn ? <Video size={20} /> : <VideoOff size={20} />}
+        </button>
+
+        {/* Live Captions Toggle */}
+        <button
+          onClick={toggleCaptions}
+          className={`p-3.5 rounded-full transition-all duration-200 flex items-center justify-center ${
+            isCaptionsOn
+              ? 'bg-[#8ab4f8] text-[#202124] shadow-md shadow-blue-400/20'
+              : 'bg-[#3c4043] hover:bg-[#4a4e52] text-white'
+          }`}
+          title={isCaptionsOn ? 'Turn off captions (c)' : 'Turn on captions (c)'}
+          aria-label={isCaptionsOn ? 'Turn off captions' : 'Turn on captions'}
+        >
+          {isCaptionsOn ? <Captions size={20} /> : <CaptionsOff size={20} />}
         </button>
 
         {/* Leave Meeting (End Call) */}
@@ -152,4 +193,3 @@ export const ControlsBar = ({
     </footer>
   );
 };
-

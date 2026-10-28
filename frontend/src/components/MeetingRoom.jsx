@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useWebRTC } from '../hooks/useWebRTC';
+import { useLiveCaptions } from '../hooks/useLiveCaptions';
 import { VideoTile } from './VideoTile';
 import { ControlsBar } from './ControlsBar';
 import { ChatDrawer } from './ChatDrawer';
 import { ParticipantsDrawer } from './ParticipantsDrawer';
 import { MeetingInfoDrawer } from './MeetingInfoDrawer';
+import { CaptionsOverlay } from './CaptionsOverlay';
 import { socket } from '../services/socket';
 
 export const MeetingRoom = ({
@@ -25,6 +27,13 @@ export const MeetingRoom = ({
     toggleAudio,
     sendChatMessage
   } = useWebRTC(roomId, userName, initialVideo, initialAudio);
+
+  const {
+    isCaptionsOn,
+    activeCaption,
+    isSupported: isSpeechSupported,
+    toggleCaptions: handleToggleCaptionsInternal
+  } = useLiveCaptions(userName, isAudioOn);
 
   const [activeSidebar, setActiveSidebar] = useState(null); // 'chat' | 'participants' | 'info' | null
   const [unreadCount, setUnreadCount] = useState(0);
@@ -72,6 +81,15 @@ export const MeetingRoom = ({
     }, 3500);
   };
 
+  const toggleCaptions = () => {
+    handleToggleCaptionsInternal();
+    if (!isCaptionsOn) {
+      showToast(isSpeechSupported ? 'Live captions turned on' : 'Live captions not supported in this browser');
+    } else {
+      showToast('Live captions turned off');
+    }
+  };
+
   const remoteList = Object.entries(remoteParticipants);
   const totalCount = 1 + remoteList.length;
 
@@ -96,7 +114,7 @@ export const MeetingRoom = ({
       {/* Main Container: Video Canvas + Optional Sidebar */}
       <div className="flex-1 flex overflow-hidden relative">
         {/* Video Canvas */}
-        <main className="flex-1 p-3 sm:p-4 md:p-6 flex items-center justify-center overflow-hidden">
+        <main className="flex-1 p-3 sm:p-4 md:p-6 flex items-center justify-center overflow-hidden relative">
           <div className={`grid gap-3 sm:gap-4 w-full h-full items-center justify-center ${getGridClass()}`}>
             {/* Local Video Tile */}
             <div className="w-full h-full min-h-[160px] flex items-center justify-center">
@@ -122,6 +140,13 @@ export const MeetingRoom = ({
               </div>
             ))}
           </div>
+
+          {/* Live Captions Overlay */}
+          <CaptionsOverlay
+            activeCaption={activeCaption}
+            isCaptionsOn={isCaptionsOn}
+            isSupported={isSpeechSupported}
+          />
         </main>
 
         {/* Sidebars */}
@@ -159,6 +184,8 @@ export const MeetingRoom = ({
         isAudioOn={isAudioOn}
         toggleVideo={toggleVideo}
         toggleAudio={toggleAudio}
+        isCaptionsOn={isCaptionsOn}
+        toggleCaptions={toggleCaptions}
         onLeaveMeeting={onLeave}
         activeSidebar={activeSidebar}
         setActiveSidebar={setActiveSidebar}
@@ -168,4 +195,3 @@ export const MeetingRoom = ({
     </div>
   );
 };
-

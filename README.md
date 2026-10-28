@@ -23,6 +23,7 @@ A lightweight, modern video meeting application built with **React (Frontend)** 
   - Camera toggle (Turn Camera On / Off with avatar fallback).
 - **In-Call Collaboration:**
   - Responsive video grid that dynamically scales for 1, 2, 4, 6, 8+ participants.
+  - **Live Captions (Real-time Speech-to-Text):** Google Meet-style continuous live subtitles with speaker identification tags and keyboard shortcut (`c`).
   - In-call chat drawer with live messaging.
   - In-call participant drawer showing connected people and their mic/camera status.
   - Meeting details drawer with one-click copy for meeting codes and links.

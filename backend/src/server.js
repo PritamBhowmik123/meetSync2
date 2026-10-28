@@ -222,6 +222,24 @@ io.on('connection', (socket) => {
     io.in(roomId).emit('new-chat-message', chatPayload);
   });
 
+  // Live Captions Broadcast
+  socket.on('send-caption', ({ text, isFinal }) => {
+    const roomId = socketToRoom.get(socket.id);
+    if (!roomId || !text || !text.trim()) return;
+
+    const roomUsers = rooms.get(roomId);
+    const user = roomUsers?.get(socket.id);
+    const senderName = user ? user.userName : 'Participant';
+
+    socket.to(roomId).emit('new-caption', {
+      senderSocketId: socket.id,
+      senderName,
+      text: text.trim(),
+      isFinal: Boolean(isFinal),
+      timestamp: Date.now()
+    });
+  });
+
   // Explicit Leave Meeting
   socket.on('leave-meeting', () => {
     handleLeaveRoom();
