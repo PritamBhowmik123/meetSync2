@@ -1,4 +1,7 @@
-const API_BASE = '/api';
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || 
+  (typeof window !== 'undefined' && window.location.port === '5173' ? 'http://localhost:5000' : '');
+
+const API_BASE = `${SERVER_URL}/api`;
 
 export const authService = {
   getToken() {
@@ -109,4 +112,3 @@ export const authService = {
     }
   }
 };
-
