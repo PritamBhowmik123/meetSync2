@@ -26,14 +26,16 @@ const PORT = process.env.PORT || 5000;
 
 // Normalize allowed origins for CORS
 const rawClientUrl = process.env.CLIENT_URL || process.env.FRONTEND_URL;
-const allowedOrigins = rawClientUrl && rawClientUrl !== '*'
-  ? [rawClientUrl.replace(/\/$/, ''), 'http://localhost:5173', 'http://localhost:3000']
+const allowedOrigins = (rawClientUrl && rawClientUrl !== '*')
+  ? [rawClientUrl.replace(/\/$/, ''), 'https://meetsync-frontend-ten.vercel.app', 'http://localhost:5173', 'http://localhost:3000']
   : '*';
 
 app.use(cors({
   origin: allowedOrigins,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
 }));
+app.options('*', cors());
 
 // Support up to 25mb for face image enrollment payloads
 app.use(express.json({ limit: '25mb' }));
