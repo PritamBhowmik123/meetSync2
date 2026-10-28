@@ -63,8 +63,22 @@ export const initDb = async () => {
       );
     `);
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS face_embeddings (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        embedding JSONB NOT NULL,
+        embeddings JSONB DEFAULT '[]',
+        photos TEXT[] DEFAULT '{}',
+        photo_count INTEGER DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(user_id)
+      );
+    `);
+
     client.release();
-    console.log('[Neon DB] Users, Meetings, and Summaries tables verified/ready.');
+    console.log('[Neon DB] Users, Meetings, Summaries, and Face Embeddings tables verified/ready.');
   } catch (err) {
     console.error('[Neon DB] Initialization error:', err.message);
   }
@@ -72,6 +86,7 @@ export const initDb = async () => {
 
 // Database operations
 export const db = {
+  initDb,
   // Find user by email
   async findUserByEmail(email) {
     const res = await pool.query(
@@ -151,5 +166,62 @@ export const db = {
       [meetingCode.trim()]
     );
     return res.rows[0] || null;
+  },
+
+  // Save or update face enrollment (supporting up to 5 photos and embeddings) in Neon DB
+  async saveFaceEnrollment({ userId, embedding, embeddings = [], photos = [] }) {
+    const res = await pool.query(
+      `INSERT INTO face_embeddings (user_id, embedding, embeddings, photos, photo_count, updated_at)
+       VALUES ($1, $2, $3, $4, $5, NOW())
+       ON CONFLICT (user_id) 
+       DO UPDATE SET 
+         embedding = EXCLUDED.embedding,
+         embeddings = EXCLUDED.embeddings,
+         photos = EXCLUDED.photos,
+         photo_count = EXCLUDED.photo_count,
+         updated_at = NOW()
+       RETURNING id, user_id, photo_count, updated_at`,
+      [
+        userId,
+        JSON.stringify(embedding),
+        JSON.stringify(embeddings),
+        photos,
+        photos.length
+      ]
+    );
+    return res.rows[0];
+  },
+
+  // Get face enrollment for a specific user
+  async getFaceEnrollment(userId) {
+    const res = await pool.query(
+      `SELECT fe.id, fe.user_id, fe.embedding, fe.embeddings, fe.photos, fe.photo_count, fe.updated_at,
+              u.name as user_name, u.email as user_email
+       FROM face_embeddings fe
+       JOIN users u ON fe.user_id = u.id
+       WHERE fe.user_id = $1`,
+      [userId]
+    );
+    return res.rows[0] || null;
+  },
+
+  // Get all face enrollments (for face matching / verification against all users)
+  async getAllFaceEnrollments() {
+    const res = await pool.query(
+      `SELECT fe.id, fe.user_id, fe.embedding, fe.embeddings, fe.photos, fe.photo_count, fe.updated_at,
+              u.name as user_name, u.email as user_email
+       FROM face_embeddings fe
+       JOIN users u ON fe.user_id = u.id`
+    );
+    return res.rows;
+  },
+
+  // Delete face enrollment for a user
+  async deleteFaceEnrollment(userId) {
+    const res = await pool.query(
+      `DELETE FROM face_embeddings WHERE user_id = $1 RETURNING id`,
+      [userId]
+    );
+    return res.rowCount > 0;
   }
 };

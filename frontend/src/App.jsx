@@ -3,6 +3,8 @@ import { AuthModal } from './components/AuthModal';
 import { Lobby } from './components/Lobby';
 import { MeetingRoom } from './components/MeetingRoom';
 import { PostMeetingScreen } from './components/PostMeetingScreen';
+import { FaceEnrollmentPage } from './components/FaceEnrollmentPage';
+import { FaceTestingPage } from './components/FaceTestingPage';
 import { authService } from './services/auth';
 
 export function App() {
@@ -11,6 +13,7 @@ export function App() {
   const [meetingConfig, setMeetingConfig] = useState(null);
   const [initialRoomId, setInitialRoomId] = useState('');
   const [postMeetingData, setPostMeetingData] = useState(null);
+  const [currentView, setCurrentView] = useState('lobby'); // 'lobby' | 'face-enrollment' | 'face-testing'
 
   // Check URL query params on load (e.g. ?room=xyz-abc-def)
   useEffect(() => {
@@ -48,11 +51,13 @@ export function App() {
     setCurrentUser(null);
     setMeetingConfig(null);
     setPostMeetingData(null);
+    setCurrentView('lobby');
   };
 
   const handleJoinMeeting = ({ roomId, userName, isVideoOn, isAudioOn }) => {
     // Dismiss post-meeting screen if active
     setPostMeetingData(null);
+    setCurrentView('lobby');
 
     // Reflect room in URL query parameter without full reload
     const url = new URL(window.location.href);
@@ -128,6 +133,28 @@ export function App() {
     );
   }
 
+  // Face Enrollment Page
+  if (currentView === 'face-enrollment') {
+    return (
+      <FaceEnrollmentPage
+        currentUser={currentUser}
+        onBack={() => setCurrentView('lobby')}
+        onNavigateToTesting={() => setCurrentView('face-testing')}
+      />
+    );
+  }
+
+  // Face Recognition Testing Page
+  if (currentView === 'face-testing') {
+    return (
+      <FaceTestingPage
+        currentUser={currentUser}
+        onBack={() => setCurrentView('lobby')}
+        onNavigateToEnrollment={() => setCurrentView('face-enrollment')}
+      />
+    );
+  }
+
   // Pre-meeting Lobby
   return (
     <Lobby
@@ -135,6 +162,8 @@ export function App() {
       onLogout={handleLogout}
       onJoinMeeting={handleJoinMeeting}
       initialRoomId={initialRoomId}
+      onNavigateToEnrollment={() => setCurrentView('face-enrollment')}
+      onNavigateToTesting={() => setCurrentView('face-testing')}
     />
   );
 }

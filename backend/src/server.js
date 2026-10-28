@@ -17,6 +17,7 @@ dotenv.config();
 import { initDb } from './db.js';
 import authRouter from './routes/auth.js';
 import meetingsRouter from './routes/meetings.js';
+import faceRouter from './routes/face.js';
 
 const app = express();
 const server = http.createServer(app);
@@ -34,7 +35,9 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }));
 
-app.use(express.json());
+// Support up to 25mb for face image enrollment payloads
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ limit: '25mb', extended: true }));
 
 // In-memory room and user storage for active WebRTC session state
 // roomId -> Map(socketId -> { socketId, userName, isVideoOn, isAudioOn })
@@ -45,9 +48,10 @@ const socketToRoom = new Map();
 // Initialize Neon Database schema
 initDb();
 
-// Authentication and Meeting Routes
+// Authentication, Meeting, and Face Recognition Routes
 app.use('/api/auth', authRouter);
 app.use('/api/meetings', meetingsRouter);
+app.use('/api/face', faceRouter);
 
 // Health Check API
 app.get('/api/health', (req, res) => {

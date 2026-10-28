@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Video,
+  VideoOff,
   Mic,
   MicOff,
   Keyboard,
@@ -11,7 +12,9 @@ import {
   History,
   X,
   Copy,
-  Check
+  Check,
+  ScanFace,
+  UserCheck
 } from 'lucide-react';
 import { authService } from '../services/auth';
 
@@ -19,7 +22,9 @@ export const Lobby = ({
   currentUser,
   onLogout,
   onJoinMeeting,
-  initialRoomId = ''
+  initialRoomId = '',
+  onNavigateToEnrollment,
+  onNavigateToTesting
 }) => {
   const [userName, setUserName] = useState(currentUser?.name || '');
   const [inputRoomId, setInputRoomId] = useState(initialRoomId);
@@ -218,6 +223,26 @@ export const Lobby = ({
             <span className="hidden sm:inline">My Meetings</span>
           </button>
 
+          {/* Face Enrollment Button */}
+          <button
+            onClick={onNavigateToEnrollment}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/40 text-xs font-medium text-blue-200 transition-colors"
+            title="Face Enrollment (FaceNet 512D)"
+          >
+            <ScanFace size={14} className="text-blue-400" />
+            <span className="hidden sm:inline">Face Enrollment</span>
+          </button>
+
+          {/* Face Testing Button */}
+          <button
+            onClick={onNavigateToTesting}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/40 border border-emerald-500/40 text-xs font-medium text-emerald-200 transition-colors"
+            title="Face Recognition Testing"
+          >
+            <UserCheck size={14} className="text-emerald-400" />
+            <span className="hidden sm:inline">Face Testing</span>
+          </button>
+
           {/* User Profile Pill */}
           <div className="flex items-center gap-2 pl-2 border-l border-[#3c4043]">
             <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-semibold text-white">
@@ -298,6 +323,42 @@ export const Lobby = ({
                 Join
               </button>
             </form>
+          </div>
+
+          {/* FaceNet Biometrics Quick Access Card */}
+          <div className="pt-4 border-t border-[#3c4043]/50">
+            <div className="p-4 rounded-2xl bg-[#282a2d]/70 border border-[#3c4043] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+                  <ScanFace size={20} />
+                </div>
+                <div>
+                  <h3 className="text-xs font-semibold text-white flex items-center gap-2">
+                    FaceNet Face Recognition
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono">Neon DB</span>
+                  </h3>
+                  <p className="text-[11px] text-gray-400">
+                    Enroll up to 5 photos or test face verification via webcam/upload
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={onNavigateToEnrollment}
+                  className="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors text-center"
+                >
+                  Enroll Face
+                </button>
+                <button
+                  type="button"
+                  onClick={onNavigateToTesting}
+                  className="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/40 text-emerald-200 text-xs font-medium transition-colors text-center"
+                >
+                  Test Face
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
