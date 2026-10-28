@@ -149,7 +149,7 @@ ${transcript.length > 0 ? transcript.map((t) => `[${t.time}] ${t.senderName}: ${
   });
 
   return (
-    <div className="min-h-screen w-screen bg-[#202124] text-white flex flex-col justify-between overflow-y-auto select-none">
+    <div className="min-h-screen w-full bg-[#202124] text-white flex flex-col justify-between select-none">
       {/* Top Header */}
       <header className="px-6 py-4 flex items-center justify-between border-b border-[#3c4043]/60 bg-[#282a2d]/80 backdrop-blur-md sticky top-0 z-20">
         <div className="flex items-center gap-3">
@@ -194,8 +194,8 @@ ${transcript.length > 0 ? transcript.map((t) => `[${t.time}] ${t.senderName}: ${
         </div>
       </header>
 
-      {/* Main Container */}
-      <main className="max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 flex-1 select-text">
+      {/* Main Container with generous bottom padding for smooth scrolling */}
+      <main className="max-w-6xl w-full mx-auto px-4 sm:px-6 pt-6 pb-28 flex-1 select-text">
         {/* Navigation Tabs & Actions */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6">
           <div className="flex bg-[#282a2d] p-1 rounded-xl border border-[#3c4043] self-start select-none">
@@ -359,16 +359,16 @@ ${transcript.length > 0 ? transcript.map((t) => `[${t.time}] ${t.senderName}: ${
               </div>
             </div>
 
-            {/* Speaker Breakdown */}
-            {summaryData.speakers.length > 0 && (
-              <div className="bg-[#282a2d] border border-[#3c4043] rounded-3xl p-6 shadow-xl">
-                <div className="flex items-center gap-2 mb-4 text-[#8ab4f8]">
-                  <Users size={18} />
-                  <h3 className="text-sm font-semibold uppercase tracking-wider">
-                    Speaker Participation
-                  </h3>
-                </div>
+            {/* Speaker Breakdown Section */}
+            <div className="bg-[#282a2d] border border-[#3c4043] rounded-3xl p-6 shadow-xl">
+              <div className="flex items-center gap-2 mb-4 text-[#8ab4f8]">
+                <Users size={18} />
+                <h3 className="text-sm font-semibold uppercase tracking-wider">
+                  Speaker Participation
+                </h3>
+              </div>
 
+              {summaryData.speakers && summaryData.speakers.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   {summaryData.speakers.map((s, idx) => (
                     <div
@@ -377,11 +377,11 @@ ${transcript.length > 0 ? transcript.map((t) => `[${t.time}] ${t.senderName}: ${
                     >
                       <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs text-white">
-                          {s.name.slice(0, 2).toUpperCase()}
+                          {s.name ? s.name.slice(0, 2).toUpperCase() : 'U'}
                         </div>
                         <div>
                           <p className="text-xs font-semibold text-white">{s.name}</p>
-                          <p className="text-[10px] text-gray-400">{s.contributions} statements</p>
+                          <p className="text-[10px] text-gray-400">{s.contributions} statement(s)</p>
                         </div>
                       </div>
                       <span className="text-xs font-semibold text-[#8ab4f8] bg-[#1a73e8]/10 px-2 py-1 rounded-md">
@@ -390,8 +390,18 @@ ${transcript.length > 0 ? transcript.map((t) => `[${t.time}] ${t.senderName}: ${
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="p-4 rounded-2xl bg-[#202124] border border-[#3c4043] text-gray-400 text-xs flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs text-white">
+                    {userName ? userName.slice(0, 2).toUpperCase() : 'ME'}
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-white">{userName} (You)</p>
+                    <p className="text-[10px] text-gray-500">Meeting participant</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
