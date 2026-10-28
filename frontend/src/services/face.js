@@ -4,7 +4,7 @@ const isLocalhost = typeof window !== 'undefined' &&
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 
-  (isLocalhost ? 'http://localhost:5000' : '');
+  (isLocalhost ? 'http://localhost:5000' : 'https://meetsync2-backend.onrender.com');
 
 const API_BASE = `${SERVER_URL}/api/face`;
 

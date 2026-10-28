@@ -4,8 +4,8 @@
   "framework": "vite",
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api"
+      "source": "/api/:path*",
+      "destination": "https://meetsync2-backend.onrender.com/api/:path*"
     },
     {
       "source": "/(.*)",
