@@ -1,8 +1,10 @@
 import { io } from 'socket.io-client';
 
-// If in development and using Vite proxy or direct host
+const isLocalhost = typeof window !== 'undefined' && 
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 
-  (window.location.port === '5173' ? 'http://localhost:5000' : window.location.origin);
+  (isLocalhost ? 'http://localhost:5000' : window.location.origin);
 
 export const socket = io(SERVER_URL, {
   autoConnect: false,
