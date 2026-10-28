@@ -65,6 +65,7 @@ export const FaceEnrollmentPage = ({
       setCameraActive(true);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
+        videoRef.current.play().catch(console.warn);
       }
     } catch (err) {
       console.error('Camera access error:', err);
@@ -72,11 +73,24 @@ export const FaceEnrollmentPage = ({
     }
   };
 
+  // Sync stream to video element whenever stream changes
+  useEffect(() => {
+    if (videoRef.current && stream) {
+      videoRef.current.srcObject = stream;
+      videoRef.current.play().catch((err) => {
+        console.warn('Video play error:', err);
+      });
+    }
+  }, [stream]);
+
   // Stop webcam
   const stopCamera = () => {
     if (stream) {
       stream.getTracks().forEach((track) => track.stop());
       setStream(null);
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
     }
     setCameraActive(false);
   };
@@ -210,7 +224,10 @@ export const FaceEnrollmentPage = ({
       <header className="px-6 py-4 flex items-center justify-between border-b border-[#3c4043]/40 bg-[#202124]/90 backdrop-blur sticky top-0 z-30">
         <div className="flex items-center gap-4">
           <button
-            onClick={onBack}
+            onClick={() => {
+              stopCamera();
+              onBack();
+            }}
             className="p-2 rounded-xl bg-[#282a2d] hover:bg-[#3c4043] border border-[#3c4043] text-gray-300 hover:text-white transition-colors flex items-center gap-2 text-sm"
           >
             <ArrowLeft size={16} />
@@ -236,7 +253,10 @@ export const FaceEnrollmentPage = ({
         {/* Right Action: Testing Page Shortcut */}
         <div className="flex items-center gap-3">
           <button
-            onClick={onNavigateToTesting}
+            onClick={() => {
+              stopCamera();
+              onNavigateToTesting();
+            }}
             className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-xs font-medium text-white shadow-lg shadow-emerald-500/20 transition-all"
           >
             <Sparkles size={14} />
@@ -349,29 +369,34 @@ export const FaceEnrollmentPage = ({
 
               {/* Viewfinder */}
               <div className="relative aspect-video rounded-xl bg-[#1e1f20] border border-[#3c4043] overflow-hidden flex items-center justify-center">
-                {cameraActive ? (
-                  <>
-                    <video
-                      ref={videoRef}
-                      autoPlay
-                      playsInline
-                      muted
-                      className="w-full h-full object-cover -scale-x-100"
-                    />
-                    {/* Face boundary overlay guideline */}
-                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                      <div className="w-48 h-64 border-2 border-dashed border-blue-400/60 rounded-full flex flex-col items-center justify-between py-4">
-                        <span className="text-[10px] text-blue-300 bg-black/60 px-2 py-0.5 rounded-full font-mono">
-                          Center Face Here
-                        </span>
-                        <div className="w-2 h-2 bg-blue-400 rounded-full animate-ping" />
-                        <span className="text-[10px] text-gray-300 bg-black/60 px-2 py-0.5 rounded-full">
-                          FaceNet Alignment
-                        </span>
-                      </div>
+                {/* Always-mounted video stream element */}
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className={`w-full h-full object-cover -scale-x-100 transition-opacity duration-300 ${
+                    cameraActive ? 'opacity-100' : 'opacity-0 absolute pointer-events-none'
+                  }`}
+                />
+
+                {/* Face boundary overlay guideline when camera active */}
+                {cameraActive && (
+                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                    <div className="w-48 h-64 border-2 border-dashed border-blue-400/60 rounded-full flex flex-col items-center justify-between py-4">
+                      <span className="text-[10px] text-blue-300 bg-black/60 px-2 py-0.5 rounded-full font-mono">
+                        Center Face Here
+                      </span>
+                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-ping" />
+                      <span className="text-[10px] text-gray-300 bg-black/60 px-2 py-0.5 rounded-full">
+                        FaceNet Alignment
+                      </span>
                     </div>
-                  </>
-                ) : (
+                  </div>
+                )}
+
+                {/* Idle placeholder when camera inactive */}
+                {!cameraActive && (
                   <div className="text-center p-6 space-y-2">
                     <div className="w-12 h-12 mx-auto rounded-full bg-[#3c4043]/60 flex items-center justify-center text-gray-400">
                       <Camera size={22} />
@@ -560,3 +585,4 @@ export const FaceEnrollmentPage = ({
   );
 };
 export default FaceEnrollmentPage;
+
