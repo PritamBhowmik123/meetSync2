@@ -192,7 +192,11 @@ export const FaceTestingPage = ({
       const result = await faceService.verifyFace(imageBase64);
       setVerificationResult(result);
     } catch (err) {
-      setErrorMsg(err.message || 'Face recognition testing failed.');
+      if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+        setErrorMsg('Server was waking up from sleep mode (Render free tier). It is now awake — please verify again.');
+      } else {
+        setErrorMsg(err.message || 'Face recognition testing failed.');
+      }
     } finally {
       setIsVerifying(false);
     }

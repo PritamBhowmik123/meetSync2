@@ -240,10 +240,17 @@ export const FaceEnrollmentPage = ({
       stopCamera();
       await loadEnrollmentStatus();
     } catch (err) {
-      setFeedback({
-        type: 'error',
-        message: err.message || 'Face enrollment failed. Please ensure faces are clear and well lit.'
-      });
+      if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+        setFeedback({
+          type: 'error',
+          message: 'Server was waking up from sleep mode (Render free tier). It is now awake — please click Enroll again.'
+        });
+      } else {
+        setFeedback({
+          type: 'error',
+          message: err.message || 'Face enrollment failed. Please ensure faces are clear and well lit.'
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }

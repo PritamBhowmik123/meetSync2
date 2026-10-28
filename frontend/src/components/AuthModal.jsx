@@ -24,7 +24,11 @@ export const AuthModal = ({ onAuthSuccess }) => {
         onAuthSuccess(res.user);
       }
     } catch (err) {
-      setError(err.message || 'Authentication failed. Please try again.');
+      if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+        setError('Server was waking up from sleep mode (Render free tier). It is now ready — please try signing in again.');
+      } else {
+        setError(err.message || 'Authentication failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
