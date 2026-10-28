@@ -42,3 +42,4 @@ export const CaptionsOverlay = ({ activeCaption, isCaptionsOn, isSupported }) =>
     </div>
   );
 };
+

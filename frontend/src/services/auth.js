@@ -110,5 +110,44 @@ export const authService = {
       console.warn('Failed to load meetings:', err);
       return [];
     }
+  },
+
+  async saveMeetingSummary(summaryPayload) {
+    const token = this.getToken();
+    if (!token) return null;
+    try {
+      const res = await fetch(`${API_BASE}/meetings/summary`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(summaryPayload)
+      });
+      return await res.json();
+    } catch (err) {
+      console.warn('Failed to save summary:', err);
+      return null;
+    }
+  },
+
+  async getMeetingSummary(meetingCode) {
+    const token = this.getToken();
+    if (!token) return null;
+    try {
+      const res = await fetch(`${API_BASE}/meetings/summary/${encodeURIComponent(meetingCode)}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.summary || null;
+      }
+      return null;
+    } catch (err) {
+      console.warn('Failed to get summary:', err);
+      return null;
+    }
   }
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useWebRTC } from '../hooks/useWebRTC';
 import { useLiveCaptions } from '../hooks/useLiveCaptions';
 import { VideoTile } from './VideoTile';
@@ -16,6 +16,8 @@ export const MeetingRoom = ({
   initialAudio = true,
   onLeave
 }) => {
+  const sessionStartTime = useRef(Date.now());
+
   const {
     localStream,
     isVideoOn,
@@ -31,6 +33,7 @@ export const MeetingRoom = ({
   const {
     isCaptionsOn,
     activeCaption,
+    meetingTranscript,
     isSupported: isSpeechSupported,
     toggleCaptions: handleToggleCaptionsInternal
   } = useLiveCaptions(userName, isAudioOn);
@@ -87,6 +90,25 @@ export const MeetingRoom = ({
       showToast(isSpeechSupported ? 'Live captions turned on' : 'Live captions not supported in this browser');
     } else {
       showToast('Live captions turned off');
+    }
+  };
+
+  const handleLeaveSession = () => {
+    const elapsedSeconds = Math.max(1, Math.round((Date.now() - sessionStartTime.current) / 1000));
+    const mins = Math.floor(elapsedSeconds / 60);
+    const secs = elapsedSeconds % 60;
+    const duration = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+
+    if (onLeave) {
+      onLeave({
+        roomId,
+        userName,
+        transcript: meetingTranscript,
+        messages,
+        duration,
+        startTime: sessionStartTime.current,
+        endedAt: new Date().toISOString()
+      });
     }
   };
 
@@ -186,7 +208,7 @@ export const MeetingRoom = ({
         toggleAudio={toggleAudio}
         isCaptionsOn={isCaptionsOn}
         toggleCaptions={toggleCaptions}
-        onLeaveMeeting={onLeave}
+        onLeaveMeeting={handleLeaveSession}
         activeSidebar={activeSidebar}
         setActiveSidebar={setActiveSidebar}
         participantsCount={totalCount}

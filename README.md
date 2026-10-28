@@ -21,6 +21,14 @@ A lightweight, modern video meeting application built with **React (Frontend)** 
   - Real-time peer-to-peer audio and video via WebRTC mesh and Google STUN servers.
   - Microphone toggle (Mute / Unmute).
   - Camera toggle (Turn Camera On / Off with avatar fallback).
+- **Post-Meeting Screen & AI Summary:**
+  - Automatically displayed right after ending/leaving any meeting.
+  - **Executive Summary:** Synthesizes meeting topics, speaker contribution breakdowns, and duration.
+  - **Key Discussion Points:** Extracted takeaways and discussions.
+  - **Interactive Action Items:** Automatically extracted tasks with interactive completion checkboxes.
+  - **Full Searchable Transcript:** Chronological log of spoken captions and in-call chat with speaker tags and timestamps.
+  - **Export & Persistence:** Download notes as `.txt`, copy to clipboard with 1-click, and auto-save summaries directly into Neon DB.
+  - **Quick Rejoin & Return Home:** Seamless navigation back to Lobby or back into the call.
 - **In-Call Collaboration:**
   - Responsive video grid that dynamically scales for 1, 2, 4, 6, 8+ participants.
   - **Live Captions (Real-time Speech-to-Text):** Google Meet-style continuous live subtitles with speaker identification tags and keyboard shortcut (`c`).

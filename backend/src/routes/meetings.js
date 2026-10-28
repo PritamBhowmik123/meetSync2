@@ -53,4 +53,46 @@ router.get('/validate/:code', verifyAuth, async (req, res) => {
   }
 });
 
+// POST /api/meetings/summary — Save meeting summary and transcript into Neon DB
+router.post('/summary', verifyAuth, async (req, res) => {
+  const { meetingCode, title, overview, keyPoints, actionItems, transcript, duration } = req.body;
+  if (!meetingCode) {
+    return res.status(400).json({ error: 'Meeting code is required.' });
+  }
+
+  try {
+    const summary = await db.saveMeetingSummary({
+      meetingCode,
+      title,
+      overview,
+      keyPoints,
+      actionItems,
+      transcript,
+      duration
+    });
+
+    res.status(201).json({
+      message: 'Summary saved in Neon DB successfully',
+      summary
+    });
+  } catch (err) {
+    console.error('[Meetings] Save summary error:', err);
+    res.status(500).json({ error: 'Failed to save meeting summary in Neon DB.' });
+  }
+});
+
+// GET /api/meetings/summary/:code — Get saved summary by meeting code
+router.get('/summary/:code', verifyAuth, async (req, res) => {
+  try {
+    const summary = await db.getMeetingSummary(req.params.code);
+    if (!summary) {
+      return res.status(404).json({ error: 'Summary not found for this meeting.' });
+    }
+    res.json({ summary });
+  } catch (err) {
+    console.error('[Meetings] Get summary error:', err);
+    res.status(500).json({ error: 'Failed to fetch meeting summary.' });
+  }
+});
+
 export default router;

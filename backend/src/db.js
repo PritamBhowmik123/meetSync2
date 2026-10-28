@@ -49,8 +49,22 @@ export const initDb = async () => {
       );
     `);
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS meeting_summaries (
+        id SERIAL PRIMARY KEY,
+        meeting_code VARCHAR(32) NOT NULL,
+        title TEXT,
+        overview TEXT,
+        key_points JSONB DEFAULT '[]',
+        action_items JSONB DEFAULT '[]',
+        transcript JSONB DEFAULT '[]',
+        duration TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+
     client.release();
-    console.log('[Neon DB] Users and Meetings tables verified/ready.');
+    console.log('[Neon DB] Users, Meetings, and Summaries tables verified/ready.');
   } catch (err) {
     console.error('[Neon DB] Initialization error:', err.message);
   }
@@ -107,6 +121,34 @@ export const db = {
     const res = await pool.query(
       'SELECT * FROM meetings WHERE LOWER(code) = LOWER($1) ORDER BY created_at DESC LIMIT 1',
       [code.trim()]
+    );
+    return res.rows[0] || null;
+  },
+
+  // Save meeting summary and transcript into Neon DB
+  async saveMeetingSummary({ meetingCode, title, overview, keyPoints, actionItems, transcript, duration }) {
+    const res = await pool.query(
+      `INSERT INTO meeting_summaries (meeting_code, title, overview, key_points, action_items, transcript, duration)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *`,
+      [
+        meetingCode.trim().toLowerCase(),
+        title || 'Meeting Summary',
+        overview || '',
+        JSON.stringify(keyPoints || []),
+        JSON.stringify(actionItems || []),
+        JSON.stringify(transcript || []),
+        duration || '0m'
+      ]
+    );
+    return res.rows[0];
+  },
+
+  // Retrieve saved summary by meeting code
+  async getMeetingSummary(meetingCode) {
+    const res = await pool.query(
+      `SELECT * FROM meeting_summaries WHERE LOWER(meeting_code) = LOWER($1) ORDER BY created_at DESC LIMIT 1`,
+      [meetingCode.trim()]
     );
     return res.rows[0] || null;
   }

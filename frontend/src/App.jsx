@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AuthModal } from './components/AuthModal';
 import { Lobby } from './components/Lobby';
 import { MeetingRoom } from './components/MeetingRoom';
+import { PostMeetingScreen } from './components/PostMeetingScreen';
 import { authService } from './services/auth';
 
 export function App() {
@@ -9,6 +10,7 @@ export function App() {
   const [authChecking, setAuthChecking] = useState(true);
   const [meetingConfig, setMeetingConfig] = useState(null);
   const [initialRoomId, setInitialRoomId] = useState('');
+  const [postMeetingData, setPostMeetingData] = useState(null);
 
   // Check URL query params on load (e.g. ?room=xyz-abc-def)
   useEffect(() => {
@@ -45,9 +47,13 @@ export function App() {
     authService.logout();
     setCurrentUser(null);
     setMeetingConfig(null);
+    setPostMeetingData(null);
   };
 
   const handleJoinMeeting = ({ roomId, userName, isVideoOn, isAudioOn }) => {
+    // Dismiss post-meeting screen if active
+    setPostMeetingData(null);
+
     // Reflect room in URL query parameter without full reload
     const url = new URL(window.location.href);
     url.searchParams.set('room', roomId);
@@ -61,13 +67,18 @@ export function App() {
     });
   };
 
-  const handleLeaveMeeting = () => {
+  const handleLeaveMeeting = (summaryPayload) => {
     // Clear room from URL
     const url = new URL(window.location.href);
     url.searchParams.delete('room');
     window.history.pushState({}, '', url.pathname);
 
     setMeetingConfig(null);
+
+    // If summary & transcript data was passed, present the post-meeting screen
+    if (summaryPayload) {
+      setPostMeetingData(summaryPayload);
+    }
   };
 
   // Loading spinner while verifying existing token
@@ -84,7 +95,7 @@ export function App() {
     return <AuthModal onAuthSuccess={handleAuthSuccess} />;
   }
 
-  // Inside active meeting room
+  // Active video meeting room
   if (meetingConfig) {
     return (
       <MeetingRoom
@@ -93,6 +104,26 @@ export function App() {
         initialVideo={meetingConfig.isVideoOn}
         initialAudio={meetingConfig.isAudioOn}
         onLeave={handleLeaveMeeting}
+      />
+    );
+  }
+
+  // Post-meeting summary and transcript screen right after ending meeting
+  if (postMeetingData) {
+    return (
+      <PostMeetingScreen
+        data={postMeetingData}
+        onReturnHome={() => setPostMeetingData(null)}
+        onRejoin={() => {
+          const targetRoom = postMeetingData.roomId;
+          setPostMeetingData(null);
+          handleJoinMeeting({
+            roomId: targetRoom,
+            userName: postMeetingData.userName || currentUser?.name || 'Participant',
+            isVideoOn: true,
+            isAudioOn: true
+          });
+        }}
       />
     );
   }

@@ -4,6 +4,7 @@ import { socket } from '../services/socket';
 export const useLiveCaptions = (userName, isAudioOn) => {
   const [isCaptionsOn, setIsCaptionsOn] = useState(false);
   const [activeCaption, setActiveCaption] = useState(null);
+  const [meetingTranscript, setMeetingTranscript] = useState([]);
   const [language, setLanguage] = useState('en-US');
   const [isSupported, setIsSupported] = useState(true);
 
@@ -41,6 +42,31 @@ export const useLiveCaptions = (userName, isAudioOn) => {
     clearTimerRef.current = setTimeout(() => {
       setActiveCaption(null);
     }, 5000);
+  }, []);
+
+  // Add a finalized entry to the meeting transcript
+  const addTranscriptEntry = useCallback((senderName, text) => {
+    if (!text || !text.trim()) return;
+    const cleanText = text.trim();
+    setMeetingTranscript((prev) => {
+      // Prevent immediate identical duplicates
+      if (prev.length > 0) {
+        const last = prev[prev.length - 1];
+        if (last.senderName === senderName && last.text === cleanText) {
+          return prev;
+        }
+      }
+      return [
+        ...prev,
+        {
+          id: `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          senderName: senderName || 'Participant',
+          text: cleanText,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          timestamp: Date.now()
+        }
+      ];
+    });
   }, []);
 
   // Start speech recognition instance
@@ -97,9 +123,14 @@ export const useLiveCaptions = (userName, isAudioOn) => {
             timestamp: Date.now()
           };
 
-          // Update local view
+          // Update local live view
           setActiveCaption(captionData);
           scheduleCaptionClear();
+
+          // Append to cumulative meeting transcript if final
+          if (isFinal) {
+            addTranscriptEntry(userName || 'You', currentText.trim());
+          }
 
           // Broadcast to other participants
           socket.emit('send-caption', {
@@ -132,7 +163,7 @@ export const useLiveCaptions = (userName, isAudioOn) => {
     } catch (err) {
       console.warn('[Captions] Error initializing speech recognition:', err);
     }
-  }, [language, userName, scheduleCaptionClear]);
+  }, [language, userName, scheduleCaptionClear, addTranscriptEntry]);
 
   // Stop speech recognition instance
   const stopRecognition = useCallback(() => {
@@ -163,13 +194,18 @@ export const useLiveCaptions = (userName, isAudioOn) => {
   // Listen for remote captions from peers
   useEffect(() => {
     const handleNewCaption = (captionData) => {
-      // Only display captions if local user has captions turned on
+      // Only display live overlay if local user has captions turned on
       if (isCaptionsOnRef.current) {
         setActiveCaption({
           ...captionData,
           isMe: false
         });
         scheduleCaptionClear();
+      }
+
+      // Record in cumulative meeting transcript
+      if (captionData.isFinal && captionData.text) {
+        addTranscriptEntry(captionData.senderName, captionData.text);
       }
     };
 
@@ -178,7 +214,7 @@ export const useLiveCaptions = (userName, isAudioOn) => {
     return () => {
       socket.off('new-caption', handleNewCaption);
     };
-  }, [scheduleCaptionClear]);
+  }, [scheduleCaptionClear, addTranscriptEntry]);
 
   // Toggle captions on/off
   const toggleCaptions = useCallback(() => {
@@ -194,6 +230,7 @@ export const useLiveCaptions = (userName, isAudioOn) => {
   return {
     isCaptionsOn,
     activeCaption,
+    meetingTranscript,
     isSupported,
     language,
     setLanguage,
