@@ -194,6 +194,22 @@ export const Lobby = ({
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
+  const handleNavigateToEnrollment = () => {
+    if (previewStream) {
+      previewStream.getTracks().forEach((t) => t.stop());
+      setPreviewStream(null);
+    }
+    onNavigateToEnrollment?.();
+  };
+
+  const handleNavigateToTesting = () => {
+    if (previewStream) {
+      previewStream.getTracks().forEach((t) => t.stop());
+      setPreviewStream(null);
+    }
+    onNavigateToTesting?.();
+  };
+
   return (
     <div className="min-h-screen bg-[#202124] text-white flex flex-col justify-between select-none">
       {/* Top Navbar */}
@@ -225,7 +241,7 @@ export const Lobby = ({
 
           {/* Face Enrollment Button */}
           <button
-            onClick={onNavigateToEnrollment}
+            onClick={handleNavigateToEnrollment}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/40 text-xs font-medium text-blue-200 transition-colors"
             title="Face Enrollment (FaceNet 512D)"
           >
@@ -235,7 +251,7 @@ export const Lobby = ({
 
           {/* Face Testing Button */}
           <button
-            onClick={onNavigateToTesting}
+            onClick={handleNavigateToTesting}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/40 border border-emerald-500/40 text-xs font-medium text-emerald-200 transition-colors"
             title="Face Recognition Testing"
           >
@@ -345,14 +361,14 @@ export const Lobby = ({
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
                   type="button"
-                  onClick={onNavigateToEnrollment}
+                  onClick={handleNavigateToEnrollment}
                   className="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors text-center"
                 >
                   Enroll Face
                 </button>
                 <button
                   type="button"
-                  onClick={onNavigateToTesting}
+                  onClick={handleNavigateToTesting}
                   className="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/40 text-emerald-200 text-xs font-medium transition-colors text-center"
                 >
                   Test Face

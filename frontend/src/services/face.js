@@ -118,3 +118,4 @@ export const faceService = {
     return data;
   }
 };
+

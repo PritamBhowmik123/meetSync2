@@ -19,19 +19,8 @@ import cv2
 import onnxruntime as ort
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-BACKEND_DIR = os.path.dirname(CURRENT_DIR)
-
-# Dynamically locate models directory
-possible_dirs = [
-    os.path.join(BACKEND_DIR, "models"),
-    os.path.join(CURRENT_DIR, "models"),
-    os.path.join(os.path.dirname(BACKEND_DIR), "models"),
-    os.path.join(os.path.dirname(BACKEND_DIR), "backend", "models")
-]
-MODELS_DIR = next(
-    (d for d in possible_dirs if os.path.exists(os.path.join(d, "facenet.onnx"))),
-    os.path.join(BACKEND_DIR, "models")
-)
+PROJECT_ROOT = os.path.dirname(CURRENT_DIR)
+MODELS_DIR = os.path.join(PROJECT_ROOT, "backend", "models")
 
 FACENET_PATH = os.path.join(MODELS_DIR, "facenet.onnx")
 YUNET_PATH = os.path.join(MODELS_DIR, "face_detection_yunet.onnx")
@@ -220,3 +209,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

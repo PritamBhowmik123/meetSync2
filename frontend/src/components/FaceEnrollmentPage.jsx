@@ -53,33 +53,66 @@ export const FaceEnrollmentPage = ({
     }
   };
 
-  // Start webcam
+  // Start webcam with automatic constraint fallback
   const startCamera = async () => {
     setCameraError(null);
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
-        audio: false
-      });
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+      }
+
+      let mediaStream;
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 640 }, height: { ideal: 480 } },
+          audio: false
+        });
+      } catch (err1) {
+        console.warn('First getUserMedia attempt failed, retrying with video: true', err1);
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false
+        });
+      }
+
       setStream(mediaStream);
       setCameraActive(true);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-        videoRef.current.play().catch(console.warn);
+
+      const video = videoRef.current;
+      if (video) {
+        video.muted = true;
+        video.playsInline = true;
+        video.srcObject = mediaStream;
+        video.onloadedmetadata = () => {
+          video.play().catch(console.warn);
+        };
+        video.play().catch(console.warn);
       }
     } catch (err) {
       console.error('Camera access error:', err);
-      setCameraError('Unable to access webcam. Please verify camera permissions.');
+      setCameraError('Unable to access webcam. Please verify camera permissions or close other applications using the camera.');
     }
   };
 
+  // Auto-start webcam on mount and cleanup on unmount
+  useEffect(() => {
+    startCamera();
+    return () => {
+      stopCamera();
+    };
+  }, []);
+
   // Sync stream to video element whenever stream changes
   useEffect(() => {
-    if (videoRef.current && stream) {
-      videoRef.current.srcObject = stream;
-      videoRef.current.play().catch((err) => {
-        console.warn('Video play error:', err);
-      });
+    const video = videoRef.current;
+    if (video && stream) {
+      video.muted = true;
+      video.playsInline = true;
+      video.srcObject = stream;
+      video.onloadedmetadata = () => {
+        video.play().catch(console.warn);
+      };
+      video.play().catch(console.warn);
     }
   }, [stream]);
 
@@ -111,15 +144,28 @@ export const FaceEnrollmentPage = ({
       return;
     }
 
-    if (!videoRef.current) return;
     const video = videoRef.current;
+    if (!video) return;
+
+    if (video.videoWidth === 0 || video.readyState < 2) {
+      setFeedback({
+        type: 'error',
+        message: 'Camera video is still loading frames. Please wait a moment.'
+      });
+      return;
+    }
+
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth || 640;
     canvas.height = video.videoHeight || 480;
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
 
+    // Mirror horizontally to match preview orientation
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
     setPhotos((prev) => [...prev, dataUrl]);
     setFeedback({ type: 'success', message: `Photo ${photos.length + 1} captured successfully!` });
   };
@@ -371,12 +417,26 @@ export const FaceEnrollmentPage = ({
               <div className="relative aspect-video rounded-xl bg-[#1e1f20] border border-[#3c4043] overflow-hidden flex items-center justify-center">
                 {/* Always-mounted video stream element */}
                 <video
-                  ref={videoRef}
+                  ref={(el) => {
+                    videoRef.current = el;
+                    if (el && stream && el.srcObject !== stream) {
+                      el.srcObject = stream;
+                      el.muted = true;
+                      el.playsInline = true;
+                      el.play().catch(console.warn);
+                    }
+                  }}
                   autoPlay
                   playsInline
                   muted
-                  className={`w-full h-full object-cover -scale-x-100 transition-opacity duration-300 ${
-                    cameraActive ? 'opacity-100' : 'opacity-0 absolute pointer-events-none'
+                  onLoadedMetadata={(e) => {
+                    e.target.play().catch(console.warn);
+                  }}
+                  onCanPlay={(e) => {
+                    e.target.play().catch(console.warn);
+                  }}
+                  className={`w-full h-full object-cover mirror-video transition-opacity duration-300 ${
+                    cameraActive ? 'opacity-100' : 'opacity-0'
                   }`}
                 />
 

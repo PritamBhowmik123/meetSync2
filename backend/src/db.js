@@ -86,7 +86,6 @@ export const initDb = async () => {
 
 // Database operations
 export const db = {
-  initDb,
   // Find user by email
   async findUserByEmail(email) {
     const res = await pool.query(
